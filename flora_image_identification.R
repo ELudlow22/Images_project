@@ -228,17 +228,35 @@ colnames(predictions) <- spp_list
 confusion <- data.frame(matrix(0, nrow=3, ncol=3), row.names=spp_list)
 colnames(confusion) <- spp_list
 
-obs_values <- factor(c(rep(spp_list[1],100),
+obs_values  <- factor(c(rep(spp_list[1],100),
                        rep(spp_list[2], 100),
                        rep(spp_list[3], 100)))
 pred_values <- factor(colnames(predictions)[apply(predictions, 1, which.max)])
 
-
-
-conf_mat <- confusionMatrix(data = pred_values, reference = obs_values)
+conf_mat    <- confusionMatrix(data = pred_values, reference = obs_values)
 conf_mat
 
+# Making a prediction for a single image ####
 
+test_image_plt <- imager::load.image("test/poppy/spp_508.jpg")
+plot(test_image_plt)
+
+
+# Need to import slightly differently resizing etc. for Keras
+test_image <- image_load("test/poppy/spp_508.jpg",
+                         target_size = target_size)
+
+test_image <- image_to_array(test_image)
+test_image <- array_reshape(test_image, c(1, dim(test_image)))
+test_image <- test_image/255
+
+# Species probability
+# Now make the prediction, and print out nicely
+pred <- model %>% predict(test_image)
+pred <- data.frame("Species" = spp_list, "Probability" = t(pred))
+pred <- pred[order(pred$Probability, decreasing=T),][1:3,]
+pred$Probability <- paste(round(100*pred$Probability,2),"%")
+pred
 
 
 
