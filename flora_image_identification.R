@@ -147,6 +147,7 @@ model %>%
   # Outputs from dense layer are projected onto output layer
   layer_dense(output_n, activation = "softmax") 
 
+# Check it is running
 print(model)
 
 # Compile the model
@@ -155,4 +156,60 @@ model %>% compile(
   optimizer = optimizer_rmsprop(lr = 0.0001, decay = 1e-6),
   metrics = "accuracy"
 )
+
+# Train the model ####
+# Do this with fit_generator
+history <- model %>% fit_generator(
+  # training data
+  train_image_array_gen,
+  
+  # epochs
+  steps_per_epoch = as.integer(train_samples / batch_size), 
+  epochs = epochs, 
+  
+  # validation data
+  validation_data = valid_image_array_gen,
+  validation_steps = as.integer(valid_samples / batch_size),
+  
+  # print progress
+  verbose = 2
+)
+
+# View the results
+plot(history)
+
+# Save the model so it can be used later ####
+# The imager package also has a save.image function, so unload it to avoid any confusion
+detach("package:imager", unload = TRUE)
+
+# The save.image function saves the whole R workspace
+save.image("flora.RData")
+
+# Saves only the model, with all its weights and configuration, in a special
+# hdf5 file on its own. You can use load_model_hdf5 to get it back.
+#model %>% save_model_hdf5("flora_simple.hdf5")
+
+#For larger models, especially if you are fine-tuning them and want to 
+#compare outputs and predictions, it is better to use the dedicated Keras 
+#save_model_hdf5 which stores it in a special hdf5 format. You can retrieve a model using the load_model_hdf5 command.
+
+# Test the model ####
+
+path_test <- "test"
+
+test_data_gen <- image_data_generator(rescale = 1/255)
+
+test_image_array_gen <- flow_images_from_directory(path_test,
+                                                   test_data_gen,
+                                                   target_size = target_size,
+                                                   class_mode = "categorical",
+                                                   classes = spp_list,
+                                                   shuffle = FALSE, # do not shuffle the images around
+                                                   batch_size = 1,  # Only 1 image at a time
+                                                   seed = 123)
+
+# Takes about 3 minutes to run through all the images
+model %>% evaluate_generator(test_image_array_gen, 
+                             steps = test_image_array_gen$n)
+
 
