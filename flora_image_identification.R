@@ -22,3 +22,22 @@ orchid_recs <-  get_inat_obs(taxon_name  = "Dactylorhiza fuchsii",
 
 # The images can then be downloaded and placed into a sub-folder
 download_images(spp_recs = orchid_recs, spp_folder = "common spotted orchid")
+
+# Do the same for the remaining two species
+# Common Poppy; Papaver rhoeas
+poppy_recs <-  get_inat_obs(taxon_name  = "Papaver rhoeas",
+                            bounds = gb_ll,
+                            quality = "research",
+                            maxresults = 600)
+
+download_images(spp_recs = poppy_recs, spp_folder = "poppy")
+
+# Common Dandelion; Taraxacum officinale
+dandelion_recs <-  get_inat_obs(taxon_name  = "Taraxacum officinale",
+                                bounds = gb_ll,
+                                quality = "research",
+                                maxresults = 600)
+
+download_images(spp_recs = dandelion_recs, spp_folder = "dandelion")
+
+
