@@ -67,3 +67,48 @@ for(folder in 1:output_n){
     file.remove(src_image)
   }
 }
+
+# Scale down the image size
+img_width <- 150
+img_height <- 150
+target_size <- c(img_width, img_height)
+
+# Full-colour Red Green Blue = 3 channels
+channels <- 3
+
+# Rescale from 255 (max colour hue) to between zero and 1 and define the proportion of images used for Validation, here 20%
+train_data_gen = image_data_generator(
+  rescale = 1/255,
+  validation_split = 0.2
+)
+
+# Training images
+train_image_array_gen <- flow_images_from_directory(image_files_path, 
+                                                    train_data_gen,
+                                                    target_size = target_size,
+                                                    class_mode = "categorical",
+                                                    classes = spp_list,
+                                                    subset = "training",
+                                                    seed = 42)
+
+# Validation images
+valid_image_array_gen <- flow_images_from_directory(image_files_path, 
+                                                    train_data_gen,
+                                                    target_size = target_size,
+                                                    class_mode = "categorical",
+                                                    classes = spp_list,
+                                                    subset = "validation",
+                                                    seed = 42)
+
+# Check that correct number of images have been read in for each process
+cat("Number of images per class:")
+
+table(factor(train_image_array_gen$classes))
+
+cat("Class labels vs index mapping")
+
+train_image_array_gen$class_indices
+
+# Look at one of the images to view the sort of difficulties you may be encountering
+plot(as.raster(train_image_array_gen[[1]][[1]][8,,,]))
+
