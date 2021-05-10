@@ -1,4 +1,4 @@
-# Install and load the relevant packages
+# Install and load the relevant packages ####
 library(rinat)
 library(sf)
 library(dplyr)
@@ -10,7 +10,7 @@ library(caret)
 source("download_images.R") 
 gb_ll <- readRDS("gb_simple.RDS")
 
-
+# Search and download species images ####
 
 # Search for images of the common spotted orchid
 orchid_recs <-  get_inat_obs(taxon_name  = "Dactylorhiza fuchsii",
@@ -41,15 +41,16 @@ dandelion_recs <-  get_inat_obs(taxon_name  = "Taraxacum officinale",
 download_images(spp_recs = dandelion_recs, spp_folder = "dandelion")
 
 
-# The images must be divided into 3 groups; Training, Validation and testing
+# The images must be divided into 3 groups; Training, Validation and testing ####
 
-image_files_path <- "images" # path to folder with photos
+# Path to folder with photos
+image_files_path <- "images" 
 
-# list of spp to model; these names must match folder names
+# List of spp to model; these names must match folder names
 spp_list <- dir(image_files_path) # Automatically pick up names
 #spp_list <- c("common spotted orchid", "poppy", "dandelion") # manual entry
 
-# number of spp classes (i.e. 3 species in this example)
+# Number of spp classes (i.e. 3 species in this example)
 output_n <- length(spp_list)
 
 # Create test, and species sub-folders
@@ -111,4 +112,47 @@ train_image_array_gen$class_indices
 
 # Look at one of the images to view the sort of difficulties you may be encountering
 plot(as.raster(train_image_array_gen[[1]][[1]][8,,,]))
+
+# Configuring the model ####
+
+# Number of training samples
+train_samples <- train_image_array_gen$n
+# Number of validation samples
+valid_samples <- valid_image_array_gen$n
+
+# define batch size and number of epochs
+batch_size <- 32 # Useful to define explicitly as we'll use it later
+epochs <- 10     # How long to keep training going for
+
+# Define the structure of the CNN
+# initialise model
+model <- keras_model_sequential()
+
+# Add layers
+model %>%
+  layer_conv_2d(filter = 32, kernel_size = c(3,3), input_shape = c(img_width, img_height, channels), activation = "relu") %>%
+  
+  # Second hidden layer
+  layer_conv_2d(filter = 16, kernel_size = c(3,3), activation = "relu") %>%
+  
+  # Use max pooling
+  layer_max_pooling_2d(pool_size = c(2,2)) %>%
+  layer_dropout(0.25) %>%
+  
+  # Flatten max filtered output into feature vector and feed into dense layer
+  layer_flatten() %>%
+  layer_dense(100, activation = "relu") %>%
+  layer_dropout(0.5) %>%
+  
+  # Outputs from dense layer are projected onto output layer
+  layer_dense(output_n, activation = "softmax") 
+
+print(model)
+
+# Compile the model
+model %>% compile(
+  loss = "categorical_crossentropy",
+  optimizer = optimizer_rmsprop(lr = 0.0001, decay = 1e-6),
+  metrics = "accuracy"
+)
 
