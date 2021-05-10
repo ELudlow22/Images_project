@@ -195,6 +195,7 @@ save.image("flora.RData")
 
 # Test the model ####
 
+# Investigate how good the model is with a completely independent data set
 path_test <- "test"
 
 test_data_gen <- image_data_generator(rescale = 1/255)
@@ -208,8 +209,36 @@ test_image_array_gen <- flow_images_from_directory(path_test,
                                                    batch_size = 1,  # Only 1 image at a time
                                                    seed = 123)
 
-# Takes about 3 minutes to run through all the images
+
 model %>% evaluate_generator(test_image_array_gen, 
                              steps = test_image_array_gen$n)
+
+# What to do if there was unbalanced data ####
+# There is not a deficiency of rare species here so it is not pertinent, but still useful to observe
+
+predictions <- model %>% 
+  predict_generator(
+    generator = test_image_array_gen,
+    steps = test_image_array_gen$n
+  ) %>% as.data.frame
+colnames(predictions) <- spp_list
+
+
+# Create 3 x 3 table to store data
+confusion <- data.frame(matrix(0, nrow=3, ncol=3), row.names=spp_list)
+colnames(confusion) <- spp_list
+
+obs_values <- factor(c(rep(spp_list[1],100),
+                       rep(spp_list[2], 100),
+                       rep(spp_list[3], 100)))
+pred_values <- factor(colnames(predictions)[apply(predictions, 1, which.max)])
+
+
+
+conf_mat <- confusionMatrix(data = pred_values, reference = obs_values)
+conf_mat
+
+
+
 
 
