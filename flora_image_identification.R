@@ -120,7 +120,7 @@ train_samples <- train_image_array_gen$n
 # Number of validation samples
 valid_samples <- valid_image_array_gen$n
 
-# define batch size and number of epochs
+# Define batch size and number of epochs
 batch_size <- 32 # Useful to define explicitly as we'll use it later
 epochs <- 10     # How long to keep training going for
 
